@@ -1,16 +1,17 @@
-import { GenAiCode } from "@/configs/AiModel";
-import { NextResponse } from "next/server";
-
-export async function POST(req){
-    const {prompt}= await req.json();
-
+export async function POST(req) {
     try {
-        const result =await GenAiCode.sendMessage(prompt)
-const resp = result
-return NextResponse.json(resp)
+        const { prompt } = await req.json();
+        if (!prompt) throw new Error("Prompt is required");
+
+        console.log("Received prompt:", prompt);
+        
+        const result = await GenAiCode.sendMessage(prompt);
+
+        console.log("AI Response:", result);
+        return NextResponse.json(result);
 
     } catch (e) {
-        return NextResponse.json({error:e})
-
+        console.error("API Error:", e);
+        return NextResponse.json({ error: e.message || "Internal Server Error" }, { status: 500 });
     }
 }
