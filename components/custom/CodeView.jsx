@@ -44,23 +44,44 @@ id && GetFiles()
   }, [messages]); 
 
 
-const GenerateAiCode=async () =>{
-  setLoading(true)
-  const PROMPT = JSON.stringify(messages)+ " "+ Prompts.CODE_GEN_PROMPT;
-  const result = await axios.post('/api/gen-ai-code',{
-    prompt:PROMPT
-  })
-  const aiResp =JSON.parse(result.data.response.candidates[0].content.parts[0].text);
-
-  const mergeFiles={...Lookup.DEFAULT_FILE,...aiResp?.files}
-  console.log(aiResp.files);
-  setFiles(mergeFiles)
-  await UpdateFiles({
-    workspacesId:id,
-    files:aiResp?.files
-  })
-  setLoading(false)
-}
+  const GenerateAiCode = async () => {
+    setLoading(true);
+  
+    const PROMPT = JSON.stringify(messages) + " " + Prompts.CODE_GEN_PROMPT;
+    
+    try {
+      // Set a timeout for 30 seconds (30000 ms)
+      const result = await axios.post('/api/gen-ai-code', {
+        prompt: PROMPT
+      }, {
+        timeout: 30000  // Set the timeout duration here (in ms)
+      });
+  
+      const aiResp = JSON.parse(result.data.response.candidates[0].content.parts[0].text);
+      
+      const mergeFiles = { ...Lookup.DEFAULT_FILE, ...aiResp?.files };
+      console.log(aiResp.files);
+      setFiles(mergeFiles);
+  
+      await UpdateFiles({
+        workspacesId: id,
+        files: aiResp?.files
+      });
+  
+    } catch (error) {
+      // Handle errors, such as timeout or other issues
+      if (error.code === 'ECONNABORTED') {
+        console.error('API request timed out');
+        alert('The request took too long. Please try again later.');
+      } else {
+        console.error('Error generating code:', error);
+        alert('There was an issue generating the code.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+  
 
 
   return (
