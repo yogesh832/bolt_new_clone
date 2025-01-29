@@ -50,23 +50,39 @@ id && GetFiles()
     const PROMPT = JSON.stringify(messages) + " " + Prompts.CODE_GEN_PROMPT;
     
     try {
-      // Set a timeout for 30 seconds (30000 ms)
-      const result = await axios.post('/api/gen-ai-code', {
-        prompt: PROMPT
-      }, {
-        timeout: 30000  // Set the timeout duration here (in ms)
-      });
+      // Helper function to handle chunk generation
+      const generateCodeInChunks = async (prompt, chunkSize) => {
+        let allFiles = {};
+        let currentChunk = 0;
+        
+        while (currentChunk < prompt.length) {
+          const chunk = prompt.slice(currentChunk, currentChunk + chunkSize);
+          currentChunk += chunkSize;
   
-      const aiResp = JSON.parse(result.data.response.candidates[0].content.parts[0].text);
-      
-      const mergeFiles = { ...Lookup.DEFAULT_FILE, ...aiResp?.files };
-      console.log(aiResp.files);
-      setFiles(mergeFiles);
+          const result = await axios.post('/api/gen-ai-code', {
+            prompt: chunk
+          }, {
+            timeout: 30000  // Set the timeout duration here (in ms)
+          });
   
-      await UpdateFiles({
-        workspacesId: id,
-        files: aiResp?.files
-      });
+          const aiResp = JSON.parse(result.data.response.candidates[0].content.parts[0].text);
+          const mergeFiles = { ...Lookup.DEFAULT_FILE, ...aiResp?.files };
+  
+          // Merge files incrementally
+          allFiles = { ...allFiles, ...mergeFiles };
+          setFiles(allFiles);  // Update the UI with partial files
+  
+          await UpdateFiles({
+            workspacesId: id,
+            files: aiResp?.files
+          });
+        }
+        return allFiles;
+      };
+  
+      // Set the chunk size (you can tweak this value based on performance)
+      const chunkSize = 500; // For example, process 500 characters at a time
+      await generateCodeInChunks(PROMPT, chunkSize);
   
     } catch (error) {
       // Handle errors, such as timeout or other issues
@@ -80,7 +96,8 @@ id && GetFiles()
     } finally {
       setLoading(false);
     }
-  }
+  };
+  
   
 
 
