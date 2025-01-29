@@ -1,7 +1,7 @@
 {
     "functions": {
       "api/gen-ai-code.js": {
-        "timeout": 40
+        "timeout": 60
       }
     }
   }
