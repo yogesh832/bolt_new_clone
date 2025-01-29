@@ -12,12 +12,13 @@ const {
   });
   
   const generationConfig = {
-    temperature: 1,
-    topP: 0.95,
-    topK: 40,
-    maxOutputTokens: 8192,
+    temperature: 0.6, // Reduce randomness
+    topP: 0.9,        // Slightly lower diversity
+    topK: 30,         // Reduce token choices
+    maxOutputTokens: 4096, // Reduce the response size
     responseMimeType: "text/plain",
   };
+  
   
   const CodeGenerationConfig = {
     temperature: 1,
